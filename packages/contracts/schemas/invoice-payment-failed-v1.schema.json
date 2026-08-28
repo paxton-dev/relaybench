@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://relaybench.example/schemas/com.relaybench.invoice.payment-failed.v1.json",
+  "title": "Invoice payment failed v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["invoiceId", "customerId", "amountMinor", "currency", "failureCode"],
+  "properties": {
+    "invoiceId": { "type": "string", "pattern": "^inv_[a-z0-9]+$" },
+    "customerId": { "type": "string", "pattern": "^cus_[a-z0-9]+$" },
+    "amountMinor": { "type": "integer", "minimum": 1 },
+    "currency": { "enum": ["USD", "EUR", "GBP"] },
+    "failureCode": { "enum": ["insufficient_funds", "expired_method", "processing_error"] }
+  }
+}

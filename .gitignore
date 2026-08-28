@@ -1,0 +1,13 @@
+node_modules/
+.build/
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfvars
+!*.tfvars.example
+backend.hcl
+apps/demo/dist/
+coverage/
+.DS_Store
+

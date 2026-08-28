@@ -1,0 +1,70 @@
+openapi: 3.1.0
+info:
+  title: RelayBench API
+  version: 0.1.0
+  description: Public bounded-scenario API and IAM-protected producer endpoint.
+paths:
+  /api/v1/scenarios/{scenario}:
+    post:
+      summary: Run a bounded demonstration scenario
+      parameters:
+        - name: scenario
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - happy-path
+              - retry-then-success
+              - duplicate-delivery
+              - invalid-schema
+              - permanent-failure
+      responses:
+        '202':
+          description: Scenario accepted for asynchronous processing
+        '422':
+          description: The intentionally invalid scenario failed contract validation
+  /api/v1/events:
+    post:
+      summary: Publish a contract-valid CloudEvent
+      security:
+        - awsSigV4: []
+      responses:
+        '202':
+          description: Event accepted
+        '422':
+          description: Event failed contract validation
+  /api/v1/runs:
+    get:
+      summary: List recent scenario runs
+      responses:
+        '200':
+          description: Recent runs
+  /api/v1/runs/{runId}:
+    get:
+      summary: Get a run, delivery projections, and attempts
+      parameters:
+        - name: runId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Run details
+        '404':
+          description: Run not found
+  /api/v1/schemas:
+    get:
+      summary: List supported event schemas
+      responses:
+        '200':
+          description: Supported event schemas
+components:
+  securitySchemes:
+    awsSigV4:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: AWS Signature Version 4 authorization enforced by API Gateway.

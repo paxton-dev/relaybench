@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://relaybench.example/schemas/com.relaybench.subscription.activated.v1.json",
+  "title": "Subscription activated v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["subscriptionId", "customerId", "plan", "billingInterval"],
+  "properties": {
+    "subscriptionId": { "type": "string", "pattern": "^sub_[a-z0-9]+$" },
+    "customerId": { "type": "string", "pattern": "^cus_[a-z0-9]+$" },
+    "plan": { "enum": ["starter", "growth", "scale"] },
+    "billingInterval": { "enum": ["month", "year"] }
+  }
+}

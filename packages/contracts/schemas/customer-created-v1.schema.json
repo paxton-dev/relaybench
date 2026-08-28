@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://relaybench.example/schemas/com.relaybench.customer.created.v1.json",
+  "title": "Customer created v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["customerId", "plan", "region"],
+  "properties": {
+    "customerId": { "type": "string", "pattern": "^cus_[a-z0-9]+$" },
+    "plan": { "enum": ["starter", "growth", "scale"] },
+    "region": { "enum": ["na", "eu", "apac"] }
+  }
+}

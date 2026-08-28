@@ -1,0 +1,52 @@
+asyncapi: 3.0.0
+info:
+  title: RelayBench Event Contracts
+  version: 0.1.0
+  description: Contract definitions for the synthetic events routed through RelayBench.
+defaultContentType: application/cloudevents+json
+channels:
+  customerCreated:
+    address: com.relaybench.customer.created.v1
+    messages:
+      customerCreated:
+        $ref: '#/components/messages/CustomerCreated'
+  subscriptionActivated:
+    address: com.relaybench.subscription.activated.v1
+    messages:
+      subscriptionActivated:
+        $ref: '#/components/messages/SubscriptionActivated'
+  invoicePaymentFailed:
+    address: com.relaybench.invoice.payment-failed.v1
+    messages:
+      invoicePaymentFailed:
+        $ref: '#/components/messages/InvoicePaymentFailed'
+operations:
+  receiveCustomerCreated:
+    action: receive
+    channel:
+      $ref: '#/channels/customerCreated'
+  receiveSubscriptionActivated:
+    action: receive
+    channel:
+      $ref: '#/channels/subscriptionActivated'
+  receiveInvoicePaymentFailed:
+    action: receive
+    channel:
+      $ref: '#/channels/invoicePaymentFailed'
+components:
+  messages:
+    CustomerCreated:
+      name: com.relaybench.customer.created.v1
+      title: Customer created
+      payload:
+        $ref: ../packages/contracts/schemas/customer-created-v1.schema.json
+    SubscriptionActivated:
+      name: com.relaybench.subscription.activated.v1
+      title: Subscription activated
+      payload:
+        $ref: ../packages/contracts/schemas/subscription-activated-v1.schema.json
+    InvoicePaymentFailed:
+      name: com.relaybench.invoice.payment-failed.v1
+      title: Invoice payment failed
+      payload:
+        $ref: ../packages/contracts/schemas/invoice-payment-failed-v1.schema.json
