@@ -1,4 +1,4 @@
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDBClient, TransactionCanceledException } from "@aws-sdk/client-dynamodb";
 import {
   DynamoDBDocumentClient,
   PutCommand,
@@ -90,6 +90,16 @@ export interface DiagnosisStore {
 
 function diagnosisCounterKey(now = new Date()): string {
   return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+
+export function isDuplicateDeliveryCancellation(error: unknown): boolean {
+  if (!(error instanceof TransactionCanceledException)) {
+    return false;
+  }
+  const [deduplicationWrite, deliveryWrite] = error.CancellationReasons ?? [];
+  return [deduplicationWrite, deliveryWrite].some(
+    (reason) => reason?.Code === "ConditionalCheckFailed",
+  );
 }
 
 export const deliveryStore: DeliveryStore & DiagnosisStore = {
@@ -198,7 +208,7 @@ export const deliveryStore: DeliveryStore & DiagnosisStore = {
       );
       return { duplicate: false };
     } catch (error) {
-      if (error instanceof Error && error.name === "TransactionCanceledException") {
+      if (isDuplicateDeliveryCancellation(error)) {
         return { duplicate: true };
       }
       throw error;
