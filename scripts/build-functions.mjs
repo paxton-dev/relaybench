@@ -1,7 +1,7 @@
 import { mkdir } from "node:fs/promises";
 import { build } from "esbuild";
 
-const functions = ["scenario", "ingest", "deliver", "query"];
+const functions = ["scenario", "ingest", "deliver", "query", "diagnose"];
 
 await Promise.all(
   functions.map(async (name) => {

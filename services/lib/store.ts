@@ -7,7 +7,9 @@ import {
   UpdateCommand,
   type QueryCommandInput,
 } from "@aws-sdk/lib-dynamodb";
+import type { RunDiagnosis } from "../../packages/contracts/diagnosis.js";
 import type { RelayBenchCloudEvent } from "../../packages/contracts/types.js";
+import type { ValidationIssue } from "../../packages/contracts/types.js";
 import { requiredEnvironment, retentionEpoch } from "./config.js";
 
 const dynamoClient = new DynamoDBClient({
@@ -37,6 +39,8 @@ export interface RunRecord {
   readonly expectedEvents: number;
   readonly deliveredCount: number;
   readonly failedCount: number;
+  readonly validationStatus: "accepted" | "rejected";
+  readonly validationIssues?: readonly ValidationIssue[];
   readonly createdAt: string;
   readonly updatedAt: string;
   readonly expiresAt: number;
@@ -59,16 +63,39 @@ export interface CompleteDeliveryInput extends DeliveryAttempt {
 }
 
 export interface DeliveryStore {
-  createRun(runId: string, scenario: string, expectedEvents: number): Promise<void>;
+  createRun(
+    runId: string,
+    scenario: string,
+    expectedEvents: number,
+    validationIssues?: readonly ValidationIssue[],
+  ): Promise<void>;
   recordAttempt(attempt: DeliveryAttempt): Promise<void>;
   completeDelivery(input: CompleteDeliveryInput): Promise<{ duplicate: boolean }>;
   listRuns(limit?: number): Promise<readonly Record<string, unknown>[]>;
   getRun(runId: string): Promise<readonly Record<string, unknown>[]>;
 }
 
-export const deliveryStore: DeliveryStore = {
-  async createRun(runId, scenario, expectedEvents) {
+export class MonthlyDiagnosisLimitReachedError extends Error {
+  constructor() {
+    super("The monthly AI diagnosis limit has been reached");
+    this.name = "MonthlyDiagnosisLimitReachedError";
+  }
+}
+
+export interface DiagnosisStore {
+  getRun(runId: string): Promise<readonly Record<string, unknown>[]>;
+  claimDiagnosisAllowance(limit: number): Promise<void>;
+  saveDiagnosis(diagnosis: RunDiagnosis): Promise<void>;
+}
+
+function diagnosisCounterKey(now = new Date()): string {
+  return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+
+export const deliveryStore: DeliveryStore & DiagnosisStore = {
+  async createRun(runId, scenario, expectedEvents, validationIssues = []) {
     const now = new Date().toISOString();
+    const validationStatus = validationIssues.length > 0 ? "rejected" : "accepted";
     const record: RunRecord = {
       pk: `RUN#${runId}`,
       sk: "META",
@@ -78,6 +105,8 @@ export const deliveryStore: DeliveryStore = {
       expectedEvents,
       deliveredCount: 0,
       failedCount: 0,
+      validationStatus,
+      validationIssues: validationIssues.length > 0 ? validationIssues : undefined,
       createdAt: now,
       updatedAt: now,
       expiresAt: retentionEpoch(),
@@ -199,6 +228,49 @@ export const deliveryStore: DeliveryStore = {
       }),
     );
     return (result.Items ?? []) as readonly Record<string, unknown>[];
+  },
+
+  async claimDiagnosisAllowance(limit) {
+    try {
+      await documentClient.send(
+        new UpdateCommand({
+          TableName: tableName(),
+          Key: { pk: `CONTROL#AI#${diagnosisCounterKey()}`, sk: "META" },
+          UpdateExpression:
+            "SET #kind = if_not_exists(#kind, :kind), expiresAt = :expiresAt ADD requestCount :one",
+          ConditionExpression:
+            "attribute_not_exists(requestCount) OR requestCount < :limit",
+          ExpressionAttributeNames: { "#kind": "kind" },
+          ExpressionAttributeValues: {
+            ":kind": "ai-usage",
+            ":expiresAt": retentionEpoch(93),
+            ":one": 1,
+            ":limit": limit,
+          },
+        }),
+      );
+    } catch (error) {
+      if (error instanceof Error && error.name === "ConditionalCheckFailedException") {
+        throw new MonthlyDiagnosisLimitReachedError();
+      }
+      throw error;
+    }
+  },
+
+  async saveDiagnosis(diagnosis) {
+    await documentClient.send(
+      new PutCommand({
+        TableName: tableName(),
+        Item: {
+          pk: `RUN#${diagnosis.runId}`,
+          sk: `DIAGNOSIS#${diagnosis.model.promptVersion}`,
+          kind: "diagnosis",
+          ...diagnosis,
+          expiresAt: retentionEpoch(),
+        },
+        ConditionExpression: "attribute_not_exists(pk)",
+      }),
+    );
   },
 };
 

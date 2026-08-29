@@ -39,7 +39,12 @@ describe("scenario service", () => {
 
     expect(result.accepted).toBe(false);
     expect(result.issues?.length).toBeGreaterThan(0);
-    expect(store.createRun).not.toHaveBeenCalled();
+    expect(store.createRun).toHaveBeenCalledWith(
+      result.runId,
+      "invalid-schema",
+      0,
+      result.issues,
+    );
     expect(publisher.publish).not.toHaveBeenCalled();
   });
 

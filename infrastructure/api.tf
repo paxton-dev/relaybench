@@ -17,14 +17,14 @@ resource "aws_apigatewayv2_api" "api" {
 }
 
 resource "aws_apigatewayv2_integration" "lambda" {
-  for_each = toset(["scenario", "ingest", "query"])
+  for_each = toset(["scenario", "ingest", "query", "diagnose"])
 
   api_id                 = aws_apigatewayv2_api.api.id
   integration_type       = "AWS_PROXY"
   integration_uri        = aws_lambda_function.function[each.value].invoke_arn
   integration_method     = "POST"
   payload_format_version = "2.0"
-  timeout_milliseconds   = 10000
+  timeout_milliseconds   = each.value == "diagnose" ? 25000 : 10000
 }
 
 resource "aws_apigatewayv2_route" "route" {
@@ -60,7 +60,7 @@ resource "aws_apigatewayv2_stage" "default" {
 }
 
 resource "aws_lambda_permission" "api" {
-  for_each = toset(["scenario", "ingest", "query"])
+  for_each = toset(["scenario", "ingest", "query", "diagnose"])
 
   statement_id  = "AllowApiGatewayInvoke"
   action        = "lambda:InvokeFunction"

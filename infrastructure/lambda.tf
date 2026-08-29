@@ -97,6 +97,28 @@ data "aws_iam_policy_document" "lambda" {
       resources = [aws_dynamodb_table.main.arn, "${aws_dynamodb_table.main.arn}/index/RecentRuns"]
     }
   }
+
+  dynamic "statement" {
+    for_each = each.key == "diagnose" ? [1] : []
+    content {
+      sid = "ReadWriteDiagnoses"
+      actions = [
+        "dynamodb:PutItem",
+        "dynamodb:Query",
+        "dynamodb:UpdateItem",
+      ]
+      resources = [aws_dynamodb_table.main.arn]
+    }
+  }
+
+  dynamic "statement" {
+    for_each = each.key == "diagnose" ? [1] : []
+    content {
+      sid       = "InvokeDiagnosisModel"
+      actions   = ["bedrock:InvokeModel"]
+      resources = ["arn:aws:bedrock:${var.aws_region}::foundation-model/${var.bedrock_model_id}"]
+    }
+  }
 }
 
 resource "aws_iam_role_policy" "lambda" {
@@ -126,6 +148,7 @@ resource "aws_lambda_function" "function" {
   architectures    = ["arm64"]
   memory_size      = each.value.memory
   timeout          = each.value.timeout
+  reserved_concurrent_executions = each.key == "diagnose" ? 1 : -1
 
   environment {
     variables = merge(each.value.environment, {

@@ -55,6 +55,29 @@ paths:
           description: Run details
         '404':
           description: Run not found
+  /api/v1/runs/{runId}/diagnosis:
+    post:
+      summary: Generate or retrieve a grounded AI diagnosis for a terminal run
+      parameters:
+        - name: runId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Validated diagnosis with evidence, evaluation, and model usage
+        '404':
+          description: Run not found
+        '409':
+          description: Run is still processing
+        '429':
+          description: Monthly AI diagnosis ceiling reached
+        '502':
+          description: Model response failed runtime validation
+        '503':
+          description: AI diagnosis is temporarily unavailable
   /api/v1/schemas:
     get:
       summary: List supported event schemas

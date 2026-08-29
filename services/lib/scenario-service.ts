@@ -42,6 +42,7 @@ export async function runScenario(
   });
 
   if (issues.length > 0) {
+    await store.createRun(scenario.runId, name, 0, issues);
     return {
       accepted: false,
       runId: scenario.runId,

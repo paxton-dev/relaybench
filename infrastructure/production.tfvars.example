@@ -1,5 +1,6 @@
 environment = "production"
 aws_region  = "us-east-1"
+ai_monthly_diagnosis_limit = 200
 
 allowed_origins = [
   "https://example.com"

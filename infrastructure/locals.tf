@@ -39,6 +39,15 @@ locals {
         TABLE_NAME = aws_dynamodb_table.main.name
       }
     }
+    diagnose = {
+      timeout = 25
+      memory  = 256
+      environment = {
+        AI_MONTHLY_LIMIT = tostring(var.ai_monthly_diagnosis_limit)
+        BEDROCK_MODEL_ID = var.bedrock_model_id
+        TABLE_NAME       = aws_dynamodb_table.main.name
+      }
+    }
   }
 
   api_routes = {
@@ -56,6 +65,10 @@ locals {
     }
     "GET /api/v1/runs/{runId}" = {
       function      = "query"
+      authorization = "NONE"
+    }
+    "POST /api/v1/runs/{runId}/diagnosis" = {
+      function      = "diagnose"
       authorization = "NONE"
     }
     "GET /api/v1/schemas" = {
