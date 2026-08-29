@@ -69,6 +69,7 @@ async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
 }
 
 export function App() {
+  const embedded = new URLSearchParams(window.location.search).get("embed") === "1";
   const [selected, setSelected] = useState<ScenarioId>("happy-path");
   const [scenarioResult, setScenarioResult] = useState<ScenarioResponse>();
   const [run, setRun] = useState<RunResponse>();
@@ -145,7 +146,7 @@ export function App() {
   }
 
   return (
-    <main>
+    <main className={embedded ? "embedded" : undefined}>
       <header className="hero">
         <p className="eyebrow">EVENT CONTRACT AND DELIVERY LAB</p>
         <h1>RelayBench</h1>

@@ -6,6 +6,11 @@ Terminal runs can be investigated by a grounded AI analyst backed by Amazon Bedr
 
 The public interface accepts only named server-generated scenarios. The raw event producer route is protected with AWS IAM authorization.
 
+The production demo is designed to run at `relaybench.jamespaxton.io` and can be embedded by the
+case-study page at `jamespaxton.io/projects/relaybench`. CloudFront allows only the portfolio apex
+and `www` hostname as frame ancestors; the application also supports `?embed=1` for a more compact
+header inside that frame. API Gateway permits the portfolio apex as an explicit browser origin.
+
 ## Current status
 
 The initial implementation includes:
@@ -118,6 +123,64 @@ Do not apply the production configuration until its plan, IAM policies, domain s
 The default deployment uses its generated CloudFront hostname. To publish the lab at `relaybench.jamespaxton.io`, first issue and validate a separate ACM certificate in `us-east-1`; the existing portfolio certificate covers only `jamespaxton.io` and `www.jamespaxton.io`. Set `demo_domain_name` and `demo_certificate_arn` together, apply the reviewed plan, then point the externally managed DNS record to the `cloudfront_domain_name` output.
 
 Once the hostname is live, add its URL to the public-project card in the `jamespaxton.io` frontend. Keeping that link out of the portfolio deployment until DNS resolves avoids publishing a broken demo.
+
+## Production deployment
+
+RelayBench deploys to AWS with Terraform from GitHub Actions. Vercel is not part of the
+deployment path. Pull requests run validation only. Every commit or merge to `main` triggers
+`.github/workflows/deploy.yml`; the workflow can also be started manually.
+
+The workflow builds the Lambda bundles and Vite application, creates a Terraform plan, applies
+that exact plan, and writes the demo and CloudFront URLs to the GitHub Actions job summary.
+Deployments are serialized so two production applies cannot run at the same time.
+
+### One-time AWS bootstrap
+
+The bootstrap module creates the versioned Terraform state bucket, a GitHub Actions OIDC provider
+when one is not supplied, and the `relaybench-github-deploy` role. The role trusts only this
+repository's `production` GitHub environment and uses short-lived credentials; no AWS access keys
+are stored in GitHub. Its permissions are limited to the AWS services in this stack, and IAM role
+management is restricted to names beginning with `relaybench-`.
+
+```bash
+terraform -chdir=infrastructure/bootstrap init
+terraform -chdir=infrastructure/bootstrap plan -out=bootstrap.tfplan
+terraform -chdir=infrastructure/bootstrap apply bootstrap.tfplan
+```
+
+An AWS account can have only one GitHub Actions OIDC provider. If the account already has one,
+pass its ARN instead of creating another:
+
+```bash
+terraform -chdir=infrastructure/bootstrap plan \
+  -var='github_oidc_provider_arn=arn:aws:iam::ACCOUNT_ID:oidc-provider/token.actions.githubusercontent.com' \
+  -out=bootstrap.tfplan
+```
+
+After applying the bootstrap module, copy its outputs into GitHub repository variables:
+
+| GitHub variable | Bootstrap value |
+| --- | --- |
+| `AWS_ACCOUNT_ID` | `terraform -chdir=infrastructure/bootstrap output -raw aws_account_id` |
+| `AWS_ROLE_ARN` | `terraform -chdir=infrastructure/bootstrap output -raw github_deploy_role_arn` |
+| `TF_STATE_BUCKET` | `terraform -chdir=infrastructure/bootstrap output -raw state_bucket` |
+| `AWS_REGION` | `us-east-1` |
+
+Create a GitHub environment named `production`. The deployment job references this environment,
+and the AWS trust policy checks it in the OIDC token. Environment reviewers may be added if manual
+approval is desired; without a reviewer, a successful push to `main` deploys automatically.
+
+For the optional custom hostname, also configure both repository variables below. Leave both
+unset to use the generated CloudFront URL.
+
+| Optional GitHub variable | Value |
+| --- | --- |
+| `DEMO_DOMAIN_NAME` | `relaybench.jamespaxton.io` |
+| `DEMO_CERTIFICATE_ARN` | ARN of its issued `us-east-1` ACM certificate |
+
+The workflow uses `aws-actions/configure-aws-credentials` with GitHub OIDC, initializes the S3
+backend at `relaybench/production/terraform.tfstate`, runs the full application checks, and applies
+only the saved production plan. A failed check or plan prevents deployment.
 
 ## Cost posture
 

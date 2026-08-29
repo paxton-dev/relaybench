@@ -36,6 +36,19 @@ main {
   border-bottom: 1px solid #171713;
 }
 
+.embedded .hero {
+  min-height: auto;
+  padding-block: clamp(2rem, 5vw, 4rem);
+}
+
+.embedded .hero h1 {
+  font-size: clamp(3.5rem, 10vw, 7rem);
+}
+
+.embedded .hero .lede {
+  margin-top: 1.5rem;
+}
+
 .eyebrow,
 .step {
   margin: 0 0 1rem;

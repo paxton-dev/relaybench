@@ -1,0 +1,127 @@
+name: Deploy production
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: relaybench-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to AWS
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: production
+    env:
+      AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+      AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
+      AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+      TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
+      TF_IN_AUTOMATION: "true"
+      TF_INPUT: "false"
+      DEMO_DOMAIN_NAME: ${{ vars.DEMO_DOMAIN_NAME }}
+      DEMO_CERTIFICATE_ARN: ${{ vars.DEMO_CERTIFICATE_ARN }}
+
+    steps:
+      - name: Check deployment configuration
+        shell: bash
+        run: |
+          missing=0
+          for name in AWS_ACCOUNT_ID AWS_ROLE_ARN TF_STATE_BUCKET; do
+            if [[ -z "${!name}" ]]; then
+              echo "::error::GitHub repository variable ${name} is required"
+              missing=1
+            fi
+          done
+          if [[ "${missing}" -ne 0 ]]; then
+            exit 1
+          fi
+          if [[ -n "${DEMO_DOMAIN_NAME}" && -z "${DEMO_CERTIFICATE_ARN}" ]] || \
+             [[ -z "${DEMO_DOMAIN_NAME}" && -n "${DEMO_CERTIFICATE_ARN}" ]]; then
+            echo "::error::DEMO_DOMAIN_NAME and DEMO_CERTIFICATE_ARN must be set together"
+            exit 1
+          fi
+
+      - name: Check out source
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: 1.16.0
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          allowed-account-ids: ${{ env.AWS_ACCOUNT_ID }}
+          role-session-name: relaybench-${{ github.run_id }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate and build
+        run: npm run check
+
+      - name: Check Terraform formatting
+        run: terraform -chdir=infrastructure fmt -check -recursive
+
+      - name: Initialize Terraform
+        shell: bash
+        run: |
+          terraform -chdir=infrastructure init -reconfigure \
+            -backend-config="bucket=${TF_STATE_BUCKET}" \
+            -backend-config="key=relaybench/production/terraform.tfstate" \
+            -backend-config="region=${AWS_REGION}" \
+            -backend-config="encrypt=true" \
+            -backend-config="use_lockfile=true"
+
+      - name: Validate Terraform
+        run: terraform -chdir=infrastructure validate
+
+      - name: Create production plan
+        shell: bash
+        run: |
+          plan_args=(
+            "-out=relaybench.tfplan"
+            "-var=environment=production"
+            "-var=aws_region=${AWS_REGION}"
+            '-var=allowed_origins=["https://jamespaxton.io","https://www.jamespaxton.io"]'
+          )
+          if [[ -n "${DEMO_DOMAIN_NAME}" ]]; then
+            plan_args+=(
+              "-var=demo_domain_name=${DEMO_DOMAIN_NAME}"
+              "-var=demo_certificate_arn=${DEMO_CERTIFICATE_ARN}"
+            )
+          fi
+          terraform -chdir=infrastructure plan "${plan_args[@]}"
+
+      - name: Apply production plan
+        run: terraform -chdir=infrastructure apply -auto-approve relaybench.tfplan
+
+      - name: Record deployment output
+        shell: bash
+        run: |
+          demo_url="$(terraform -chdir=infrastructure output -raw demo_url)"
+          cloudfront_domain="$(terraform -chdir=infrastructure output -raw cloudfront_domain_name)"
+          {
+            echo "## RelayBench deployment"
+            echo
+            echo "- Demo: ${demo_url}"
+            echo "- CloudFront: ${cloudfront_domain}"
+          } >> "${GITHUB_STEP_SUMMARY}"

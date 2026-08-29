@@ -18,7 +18,7 @@ variable "environment" {
 variable "allowed_origins" {
   description = "Additional browser origins allowed to call the public read API."
   type        = list(string)
-  default     = []
+  default     = ["https://jamespaxton.io"]
 }
 
 variable "demo_domain_name" {

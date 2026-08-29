@@ -51,3 +51,13 @@ resource "aws_s3_bucket_lifecycle_configuration" "state" {
 output "state_bucket" {
   value = aws_s3_bucket.state.id
 }
+
+output "aws_account_id" {
+  description = "AWS account allowed by the production workflow."
+  value       = data.aws_caller_identity.current.account_id
+}
+
+output "github_deploy_role_arn" {
+  description = "Role assumed by the RelayBench production GitHub Actions workflow."
+  value       = aws_iam_role.github_deploy.arn
+}

@@ -49,18 +49,13 @@ resource "aws_cloudfront_response_headers_policy" "security" {
       override = true
     }
 
-    frame_options {
-      frame_option = "DENY"
-      override     = true
-    }
-
     referrer_policy {
       referrer_policy = "strict-origin-when-cross-origin"
       override        = true
     }
 
     content_security_policy {
-      content_security_policy = "default-src 'self'; base-uri 'self'; connect-src 'self'; font-src 'self'; frame-ancestors 'none'; img-src 'self' data:; object-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'"
+      content_security_policy = "default-src 'self'; base-uri 'self'; connect-src 'self'; font-src 'self'; frame-ancestors https://jamespaxton.io https://www.jamespaxton.io; img-src 'self' data:; object-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'"
       override                = true
     }
   }

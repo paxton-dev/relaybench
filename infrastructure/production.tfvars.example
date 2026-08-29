@@ -9,5 +9,5 @@ ai_monthly_diagnosis_limit = 200
 # demo_certificate_arn = "arn:aws:acm:us-east-1:ACCOUNT_ID:certificate/CERTIFICATE_ID"
 
 allowed_origins = [
-  "https://example.com"
+  "https://jamespaxton.io"
 ]
