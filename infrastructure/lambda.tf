@@ -139,16 +139,15 @@ resource "aws_cloudwatch_log_group" "lambda" {
 resource "aws_lambda_function" "function" {
   for_each = local.functions
 
-  function_name                  = "${local.prefix}-${each.key}"
-  role                           = aws_iam_role.lambda[each.key].arn
-  filename                       = data.archive_file.function[each.key].output_path
-  source_code_hash               = data.archive_file.function[each.key].output_base64sha256
-  handler                        = "index.handler"
-  runtime                        = "nodejs24.x"
-  architectures                  = ["arm64"]
-  memory_size                    = each.value.memory
-  timeout                        = each.value.timeout
-  reserved_concurrent_executions = each.key == "diagnose" ? 1 : -1
+  function_name    = "${local.prefix}-${each.key}"
+  role             = aws_iam_role.lambda[each.key].arn
+  filename         = data.archive_file.function[each.key].output_path
+  source_code_hash = data.archive_file.function[each.key].output_base64sha256
+  handler          = "index.handler"
+  runtime          = "nodejs24.x"
+  architectures    = ["arm64"]
+  memory_size      = each.value.memory
+  timeout          = each.value.timeout
 
   environment {
     variables = merge(each.value.environment, {

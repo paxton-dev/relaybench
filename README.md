@@ -188,7 +188,7 @@ RelayBench has no VPC, NAT Gateway, WAF, provisioned concurrency, EventBridge ar
 
 Public scenarios are API-throttled, retain records for seven days, and cannot accept arbitrary webhook destinations.
 
-AI inference is additionally constrained to one concurrent diagnosis, one stored diagnosis per run, and 200 new diagnoses per UTC month by default. Cached diagnoses do not consume the monthly allowance. The limit can be lowered with `ai_monthly_diagnosis_limit`; raising it above 1,000 is intentionally rejected by Terraform validation.
+AI inference is additionally constrained to one stored diagnosis per run and 200 new diagnoses per UTC month by default. Cached diagnoses do not consume the monthly allowance. The public API is throttled, and the monthly allowance is claimed atomically before model invocation. The limit can be lowered with `ai_monthly_diagnosis_limit`; raising it above 1,000 is intentionally rejected by Terraform validation.
 
 ## License
 
