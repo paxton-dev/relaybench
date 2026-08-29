@@ -1,6 +1,7 @@
 import {
   BedrockRuntimeClient,
   ConverseCommand,
+  type ConverseCommandOutput,
 } from "@aws-sdk/client-bedrock-runtime";
 import type { DiagnosisEvidence } from "../../packages/contracts/diagnosis.js";
 import { requiredEnvironment } from "./config.js";
@@ -46,7 +47,7 @@ Return only one JSON object with exactly these fields:
 }
 Do not use Markdown. Do not invent evidence IDs, systems, causes, or customer impact.`;
 
-function responseText(response: Awaited<ReturnType<typeof client.send>>): string {
+function responseText(response: ConverseCommandOutput): string {
   const content = response.output?.message?.content ?? [];
   return content.flatMap((block) => typeof block.text === "string" ? [block.text] : []).join("");
 }

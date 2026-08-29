@@ -6,7 +6,12 @@ import {
 } from "../../packages/contracts/diagnosis.js";
 import { scenarioNames, type ScenarioName } from "../../packages/contracts/types.js";
 import type { ModelDiagnosis } from "./diagnosis.js";
-import { deriveRun, isTerminalRun, type RunView } from "./run-view.js";
+import {
+  deriveRun,
+  diagnosisFromItem,
+  isTerminalRun,
+  type RunView,
+} from "./run-view.js";
 import type { DiagnosisStore } from "./store.js";
 
 export interface DiagnosisGeneration {
@@ -92,8 +97,7 @@ export function buildDiagnosisEvidence(run: RunView): readonly DiagnosisEvidence
 function storedDiagnosis(
   items: readonly Record<string, unknown>[],
 ): RunDiagnosis | undefined {
-  const item = items.find((candidate) => candidate.kind === "diagnosis");
-  return item?.schemaVersion === "1" ? item as unknown as RunDiagnosis : undefined;
+  return diagnosisFromItem(items.find((candidate) => candidate.kind === "diagnosis"));
 }
 
 export async function diagnoseRun(

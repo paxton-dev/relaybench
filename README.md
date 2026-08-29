@@ -2,6 +2,8 @@
 
 RelayBench is a public, bounded webhook-delivery lab. It validates versioned CloudEvents, routes accepted events through Amazon EventBridge, buffers delivery with Amazon SQS, demonstrates controlled retries and duplicate suppression, and builds queryable DynamoDB projections.
 
+Terminal runs can be investigated by a grounded AI analyst backed by Amazon Bedrock. The analyst receives only server-generated delivery evidence, returns runtime-validated JSON with checked evidence citations, and is scored against the scenario's known diagnosis.
+
 The public interface accepts only named server-generated scenarios. The raw event producer route is protected with AWS IAM authorization.
 
 ## Current status
@@ -15,6 +17,8 @@ The initial implementation includes:
 - SQS partial-batch failure handling and a dead-letter queue
 - DynamoDB run, attempt, delivery, and deduplication records
 - A React/Vite observer interface
+- A bounded Nova Micro diagnosis endpoint with evidence citations and golden-case evaluation
+- A DynamoDB-backed monthly inference ceiling and per-run response cache
 - Terraform for all application infrastructure
 - Application unit tests and CI validation
 
@@ -38,6 +42,12 @@ CloudFront
         DynamoDB projections and TTL
                   │
             read API Lambda
+
+Terminal run → diagnosis Lambda → Amazon Bedrock Nova Micro
+                   │
+          validated, evidence-linked result
+                   │
+          DynamoDB cache and usage counter
 
 Failed delivery → SQS dead-letter queue
 ```
@@ -75,6 +85,8 @@ npm run dev
 
 The local interface needs a deployed API or a local API proxy before its scenario buttons can complete requests.
 
+The AI diagnosis requires Bedrock model access for `amazon.nova-micro-v1:0` in `us-east-1`. The Lambda uses the Converse API with a 500-token output limit. Terraform grants access only to that regional foundation-model ARN.
+
 ## Contracts
 
 Contracts live in `packages/contracts/schemas`. Released contract files are immutable. Additive optional properties may be introduced within a major event version; removing fields, changing meaning, or tightening validation requires a new event type version.
@@ -106,6 +118,8 @@ Do not apply the production configuration until its plan, IAM policies, domain s
 RelayBench has no VPC, NAT Gateway, WAF, provisioned concurrency, EventBridge archive, or customer-managed KMS key. At portfolio traffic, expected AWS usage is approximately $0 to $0.10 per month, depending on the account's remaining free-tier allowances.
 
 Public scenarios are API-throttled, retain records for seven days, and cannot accept arbitrary webhook destinations.
+
+AI inference is additionally constrained to one concurrent diagnosis, one stored diagnosis per run, and 200 new diagnoses per UTC month by default. Cached diagnoses do not consume the monthly allowance. The limit can be lowered with `ai_monthly_diagnosis_limit`; raising it above 1,000 is intentionally rejected by Terraform validation.
 
 ## License
 

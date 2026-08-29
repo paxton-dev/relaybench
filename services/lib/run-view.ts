@@ -14,6 +14,22 @@ export interface RunView extends Record<string, unknown> {
   readonly diagnosis?: RunDiagnosis;
 }
 
+export function diagnosisFromItem(
+  item: Record<string, unknown> | undefined,
+): RunDiagnosis | undefined {
+  if (item?.kind !== "diagnosis" || item.schemaVersion !== "1") {
+    return undefined;
+  }
+  const {
+    pk: _pk,
+    sk: _sk,
+    kind: _kind,
+    expiresAt: _expiresAt,
+    ...diagnosis
+  } = item;
+  return diagnosis as unknown as RunDiagnosis;
+}
+
 export function deriveRun(
   items: readonly Record<string, unknown>[],
 ): RunView | undefined {
@@ -33,9 +49,7 @@ export function deriveRun(
         : delivered >= expected
           ? "delivered"
           : "processing";
-  const diagnosis = items.find((item) => item.kind === "diagnosis") as
-    | (Record<string, unknown> & RunDiagnosis)
-    | undefined;
+  const diagnosis = diagnosisFromItem(items.find((item) => item.kind === "diagnosis"));
 
   return {
     ...meta,
