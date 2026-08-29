@@ -55,7 +55,7 @@ resource "aws_cloudfront_response_headers_policy" "security" {
     }
 
     content_security_policy {
-      content_security_policy = "default-src 'self'; base-uri 'self'; connect-src 'self'; font-src 'self'; frame-ancestors https://jamespaxton.io https://www.jamespaxton.io; img-src 'self' data:; object-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'"
+      content_security_policy = "default-src 'self'; base-uri 'self'; connect-src 'self'; font-src 'self'; frame-ancestors https://jamespaxton.io https://www.jamespaxton.io http://localhost:3000 http://127.0.0.1:3000; img-src 'self' data:; object-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'"
       override                = true
     }
   }

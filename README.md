@@ -7,9 +7,10 @@ Terminal runs can be investigated by a grounded AI analyst backed by Amazon Bedr
 The public interface accepts only named server-generated scenarios. The raw event producer route is protected with AWS IAM authorization.
 
 The production demo is designed to run at `relaybench.jamespaxton.io` and can be embedded by the
-case-study page at `jamespaxton.io/projects/relaybench`. CloudFront allows only the portfolio apex
-and `www` hostname as frame ancestors; the application also supports `?embed=1` for a more compact
-header inside that frame. API Gateway permits the portfolio apex as an explicit browser origin.
+case-study page at `jamespaxton.io/projects/relaybench`. CloudFront allows the portfolio apex and
+`www` hostname as frame ancestors, plus `localhost:3000` and `127.0.0.1:3000` for local portfolio
+development. The application also supports `?embed=1` for a more compact header inside that frame.
+API Gateway permits the portfolio apex as an explicit browser origin.
 
 ## Current status
 
