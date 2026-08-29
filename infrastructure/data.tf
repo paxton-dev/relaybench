@@ -1,10 +1,8 @@
 resource "aws_dynamodb_table" "main" {
-  name           = "${local.prefix}-deliveries"
-  billing_mode   = "PROVISIONED"
-  read_capacity  = 5
-  write_capacity = 5
-  hash_key       = "pk"
-  range_key      = "sk"
+  name         = "${local.prefix}-deliveries"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "pk"
+  range_key    = "sk"
 
   attribute {
     name = "pk"
@@ -29,8 +27,6 @@ resource "aws_dynamodb_table" "main" {
   global_secondary_index {
     name            = "RecentRuns"
     projection_type = "ALL"
-    read_capacity   = 5
-    write_capacity  = 5
 
     key_schema {
       attribute_name = "gsi1pk"

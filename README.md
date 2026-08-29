@@ -184,7 +184,7 @@ only the saved production plan. A failed check or plan prevents deployment.
 
 ## Cost posture
 
-RelayBench has no VPC, NAT Gateway, WAF, provisioned concurrency, EventBridge archive, or customer-managed KMS key. At portfolio traffic, expected AWS usage is approximately $0 to $0.10 per month, depending on the account's remaining free-tier allowances.
+RelayBench has no VPC, NAT Gateway, WAF, provisioned concurrency, EventBridge archive, or customer-managed KMS key. DynamoDB uses on-demand billing so idle traffic does not reserve read or write throughput. At portfolio traffic, expected AWS usage is approximately $0 to $0.10 per month, depending on the account's remaining free-tier allowances.
 
 Public scenarios are API-throttled, retain records for seven days, and cannot accept arbitrary webhook destinations.
 
