@@ -9,6 +9,7 @@ import {
 } from "../services/lib/diagnosis-service.js";
 import { deriveRun } from "../services/lib/run-view.js";
 import type { DiagnosisStore } from "../services/lib/store.js";
+import { buildDiagnosisUserPrompt } from "../services/lib/bedrock-diagnosis.js";
 
 const terminalRunItems: readonly Record<string, unknown>[] = [
   {
@@ -81,6 +82,16 @@ function dependencies(items = terminalRunItems) {
 }
 
 describe("AI diagnosis", () => {
+  it("requires the run evidence ID in the model prompt", () => {
+    const prompt = buildDiagnosisUserPrompt([
+      { id: "R1", category: "run", observation: "The run delivered." },
+      { id: "D1", category: "delivery", observation: "The event was delivered." },
+    ]);
+
+    expect(prompt).toContain("Available evidence IDs: R1, D1");
+    expect(prompt).toContain("must contain R1");
+  });
+
   it("validates model JSON and rejects evidence that was not supplied", () => {
     const run = deriveRun(terminalRunItems);
     if (!run) {

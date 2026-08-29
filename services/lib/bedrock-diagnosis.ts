@@ -14,7 +14,7 @@ import type {
   DiagnosisGenerator,
 } from "./diagnosis-service.js";
 
-export const diagnosisPromptVersion = "incident-triage-v1";
+export const diagnosisPromptVersion = "incident-triage-v2";
 
 const client = new BedrockRuntimeClient({
   region: process.env.AWS_REGION ?? "us-east-1",
@@ -45,7 +45,17 @@ Return only one JSON object with exactly these fields:
   "recommendedAction": "one proportionate next action, at most 300 characters",
   "evidenceIds": ["one to four IDs copied exactly from the supplied evidence"]
 }
+The evidenceIds array must never be empty. Always include R1, then add up to three other IDs that
+directly support the diagnosis.
 Do not use Markdown. Do not invent evidence IDs, systems, causes, or customer impact.`;
+
+export function buildDiagnosisUserPrompt(evidence: readonly DiagnosisEvidence[]): string {
+  const availableIds = evidence.map((item) => item.id);
+  return `Available evidence IDs: ${availableIds.join(", ")}.
+Your evidenceIds array must contain R1 and may contain up to three additional IDs from that list.
+Evidence JSON:
+${JSON.stringify({ evidence } satisfies { evidence: readonly DiagnosisEvidence[] })}`;
+}
 
 function responseText(response: ConverseCommandOutput): string {
   const content = response.output?.message?.content ?? [];
@@ -64,7 +74,7 @@ export const bedrockDiagnosisGenerator: DiagnosisGenerator = {
         messages: [
           {
             role: "user",
-            content: [{ text: JSON.stringify({ evidence } satisfies { evidence: readonly DiagnosisEvidence[] }) }],
+            content: [{ text: buildDiagnosisUserPrompt(evidence) }],
           },
         ],
         inferenceConfig: {
