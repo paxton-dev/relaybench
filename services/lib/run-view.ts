@@ -41,14 +41,13 @@ export function deriveRun(
   const expected = Number(meta.expectedEvents ?? 0);
   const delivered = Number(meta.deliveredCount ?? 0);
   const failed = Number(meta.failedCount ?? 0);
-  const status: RunStatus =
-    meta.validationStatus === "rejected"
-      ? "rejected"
-      : failed > 0
-        ? "failed"
-        : delivered >= expected
-          ? "delivered"
-          : "processing";
+  const terminalEvents = delivered + failed;
+  let status: RunStatus = "processing";
+  if (meta.validationStatus === "rejected") {
+    status = "rejected";
+  } else if (terminalEvents >= expected) {
+    status = failed > 0 ? "failed" : "delivered";
+  }
   const diagnosis = diagnosisFromItem(items.find((item) => item.kind === "diagnosis"));
 
   return {

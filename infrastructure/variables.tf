@@ -21,6 +21,20 @@ variable "allowed_origins" {
   default     = []
 }
 
+variable "demo_domain_name" {
+  description = "Optional custom hostname for the CloudFront demo, such as relaybench.jamespaxton.io."
+  type        = string
+  default     = null
+  nullable    = true
+}
+
+variable "demo_certificate_arn" {
+  description = "Optional ARN of an issued us-east-1 ACM certificate covering demo_domain_name."
+  type        = string
+  default     = null
+  nullable    = true
+}
+
 variable "bedrock_model_id" {
   description = "Regional Amazon Bedrock model used for bounded AI diagnoses."
   type        = string

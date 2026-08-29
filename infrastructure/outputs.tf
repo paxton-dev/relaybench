@@ -5,7 +5,14 @@ output "api_url" {
 
 output "demo_url" {
   description = "CloudFront URL for the RelayBench demo."
-  value       = "https://${aws_cloudfront_distribution.site.domain_name}"
+  value = var.demo_domain_name == null ? (
+    "https://${aws_cloudfront_distribution.site.domain_name}"
+  ) : "https://${var.demo_domain_name}"
+}
+
+output "cloudfront_domain_name" {
+  description = "CloudFront target for an externally managed custom-domain DNS record."
+  value       = aws_cloudfront_distribution.site.domain_name
 }
 
 output "event_bus_name" {

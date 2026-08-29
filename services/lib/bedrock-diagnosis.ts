@@ -53,6 +53,7 @@ function responseText(response: ConverseCommandOutput): string {
 }
 
 export const bedrockDiagnosisGenerator: DiagnosisGenerator = {
+  promptVersion: diagnosisPromptVersion,
   async generate(evidence): Promise<DiagnosisGeneration> {
     const modelId = requiredEnvironment("BEDROCK_MODEL_ID");
     const startedAt = performance.now();

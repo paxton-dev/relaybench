@@ -63,6 +63,20 @@ export function parseModelDiagnosis(
   if (!isRecord(parsed)) {
     throw new InvalidModelDiagnosisError("Model response must be a JSON object");
   }
+  const allowedKeys = new Set([
+    "diagnosisCode",
+    "headline",
+    "summary",
+    "confidence",
+    "recommendedAction",
+    "evidenceIds",
+  ]);
+  const unexpectedKeys = Object.keys(parsed).filter((key) => !allowedKeys.has(key));
+  if (unexpectedKeys.length > 0) {
+    throw new InvalidModelDiagnosisError(
+      `Model response contained unexpected fields: ${unexpectedKeys.join(", ")}`,
+    );
+  }
 
   const diagnosisCode = parsed.diagnosisCode;
   if (

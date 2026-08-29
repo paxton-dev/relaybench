@@ -40,7 +40,7 @@ locals {
       }
     }
     diagnose = {
-      timeout = 25
+      timeout = 28
       memory  = 256
       environment = {
         AI_MONTHLY_LIMIT = tostring(var.ai_monthly_diagnosis_limit)

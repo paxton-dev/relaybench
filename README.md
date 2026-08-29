@@ -113,6 +113,12 @@ terraform -chdir=infrastructure plan -var-file=production.tfvars
 
 Do not apply the production configuration until its plan, IAM policies, domain strategy, and cost controls have been reviewed.
 
+### Custom domain
+
+The default deployment uses its generated CloudFront hostname. To publish the lab at `relaybench.jamespaxton.io`, first issue and validate a separate ACM certificate in `us-east-1`; the existing portfolio certificate covers only `jamespaxton.io` and `www.jamespaxton.io`. Set `demo_domain_name` and `demo_certificate_arn` together, apply the reviewed plan, then point the externally managed DNS record to the `cloudfront_domain_name` output.
+
+Once the hostname is live, add its URL to the public-project card in the `jamespaxton.io` frontend. Keeping that link out of the portfolio deployment until DNS resolves avoids publishing a broken demo.
+
 ## Cost posture
 
 RelayBench has no VPC, NAT Gateway, WAF, provisioned concurrency, EventBridge archive, or customer-managed KMS key. At portfolio traffic, expected AWS usage is approximately $0 to $0.10 per month, depending on the account's remaining free-tier allowances.

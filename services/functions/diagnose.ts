@@ -18,8 +18,8 @@ const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}
 
 function monthlyLimit(): number {
   const limit = Number(requiredEnvironment("AI_MONTHLY_LIMIT"));
-  if (!Number.isInteger(limit) || limit < 1 || limit > 10_000) {
-    throw new Error("AI_MONTHLY_LIMIT must be an integer between 1 and 10000");
+  if (!Number.isInteger(limit) || limit < 1 || limit > 1_000) {
+    throw new Error("AI_MONTHLY_LIMIT must be an integer between 1 and 1000");
   }
   return limit;
 }

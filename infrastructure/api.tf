@@ -24,7 +24,7 @@ resource "aws_apigatewayv2_integration" "lambda" {
   integration_uri        = aws_lambda_function.function[each.value].invoke_arn
   integration_method     = "POST"
   payload_format_version = "2.0"
-  timeout_milliseconds   = each.value == "diagnose" ? 25000 : 10000
+  timeout_milliseconds   = each.value == "diagnose" ? 29000 : 10000
 }
 
 resource "aws_apigatewayv2_route" "route" {

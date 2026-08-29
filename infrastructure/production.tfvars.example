@@ -2,6 +2,12 @@ environment = "production"
 aws_region  = "us-east-1"
 ai_monthly_diagnosis_limit = 200
 
+# The existing jamespaxton.io certificate covers only the apex and www names.
+# Issue a separate certificate in us-east-1 before enabling this alias, then
+# point the external DNS record at the cloudfront_domain_name output.
+# demo_domain_name     = "relaybench.jamespaxton.io"
+# demo_certificate_arn = "arn:aws:acm:us-east-1:ACCOUNT_ID:certificate/CERTIFICATE_ID"
+
 allowed_origins = [
   "https://example.com"
 ]

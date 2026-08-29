@@ -20,6 +20,7 @@ export interface DiagnosisGeneration {
 }
 
 export interface DiagnosisGenerator {
+  readonly promptVersion: string;
   generate(evidence: readonly DiagnosisEvidence[]): Promise<DiagnosisGeneration>;
 }
 
@@ -96,8 +97,12 @@ export function buildDiagnosisEvidence(run: RunView): readonly DiagnosisEvidence
 
 function storedDiagnosis(
   items: readonly Record<string, unknown>[],
+  promptVersion: string,
 ): RunDiagnosis | undefined {
-  return diagnosisFromItem(items.find((candidate) => candidate.kind === "diagnosis"));
+  return items
+    .filter((candidate) => candidate.kind === "diagnosis")
+    .map((candidate) => diagnosisFromItem(candidate))
+    .find((candidate) => candidate?.model.promptVersion === promptVersion);
 }
 
 export async function diagnoseRun(
@@ -107,7 +112,7 @@ export async function diagnoseRun(
   generator: DiagnosisGenerator,
 ): Promise<DiagnosisResult> {
   const items = await store.getRun(runId);
-  const existing = storedDiagnosis(items);
+  const existing = storedDiagnosis(items, generator.promptVersion);
   if (existing) {
     return { diagnosis: existing, cached: true };
   }

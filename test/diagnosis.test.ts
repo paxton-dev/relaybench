@@ -58,6 +58,7 @@ function dependencies(items = terminalRunItems) {
     saveDiagnosis: vi.fn().mockResolvedValue(undefined),
   };
   const generator: DiagnosisGenerator = {
+    promptVersion: "incident-triage-v1",
     generate: vi.fn().mockResolvedValue({
       diagnosis: {
         diagnosisCode: "transient-failure-recovered",
@@ -172,5 +173,21 @@ describe("AI diagnosis", () => {
       diagnoseRun("00000000-0000-4000-8000-000000000101", 200, store, generator),
     ).rejects.toBeInstanceOf(RunNotReadyError);
     expect(generator.generate).not.toHaveBeenCalled();
+  });
+
+  it("keeps a partially failed multi-event run in processing", () => {
+    const run = deriveRun([
+      {
+        kind: "run",
+        runId: "00000000-0000-4000-8000-000000000102",
+        scenario: "permanent-failure",
+        expectedEvents: 3,
+        deliveredCount: 0,
+        failedCount: 1,
+        validationStatus: "accepted",
+      },
+    ]);
+
+    expect(run?.status).toBe("processing");
   });
 });

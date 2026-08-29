@@ -71,6 +71,7 @@ resource "aws_cloudfront_distribution" "site" {
   default_root_object = "index.html"
   price_class         = "PriceClass_100"
   comment             = "${local.prefix}-site"
+  aliases             = var.demo_domain_name == null ? [] : [var.demo_domain_name]
 
   origin {
     domain_name              = aws_s3_bucket.site.bucket_regional_domain_name
@@ -123,7 +124,21 @@ resource "aws_cloudfront_distribution" "site" {
   }
 
   viewer_certificate {
-    cloudfront_default_certificate = true
+    cloudfront_default_certificate = var.demo_certificate_arn == null
+    acm_certificate_arn            = var.demo_certificate_arn
+    ssl_support_method             = var.demo_certificate_arn == null ? null : "sni-only"
+    minimum_protocol_version       = var.demo_certificate_arn == null ? "TLSv1" : "TLSv1.2_2021"
+  }
+
+  lifecycle {
+    precondition {
+      condition = (
+        var.demo_domain_name == null && var.demo_certificate_arn == null
+        ) || (
+        var.demo_domain_name != null && var.demo_certificate_arn != null
+      )
+      error_message = "demo_domain_name and demo_certificate_arn must be set together."
+    }
   }
 }
 
